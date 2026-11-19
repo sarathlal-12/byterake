@@ -1,0 +1,675 @@
+<Window x:Class="Byterake.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Byterake.App"
+        Title="Byterake" Width="1380" Height="900" MinWidth="1100" MinHeight="680"
+        WindowStartupLocation="CenterScreen" Icon="Assets/byterake.ico"
+        Background="{DynamicResource Bg}" Foreground="{DynamicResource Text}"
+        FontFamily="{StaticResource UiFont}" FontSize="14"
+        TextOptions.TextFormattingMode="Display">
+    <Window.Resources>
+        <StreamGeometry x:Key="IcoGrid">M3,3 H10 V10 H3 Z M14,3 H21 V10 H14 Z M3,14 H10 V21 H3 Z M14,14 H21 V21 H14 Z</StreamGeometry>
+        <StreamGeometry x:Key="IcoSearch">M4,11 A7,7 0 1 0 18,11 A7,7 0 1 0 4,11 M16,16 L20,20</StreamGeometry>
+        <StreamGeometry x:Key="IcoFiles">M14,3 H6 V21 H18 V7 Z M14,3 V7 H18</StreamGeometry>
+        <StreamGeometry x:Key="IcoBox">M3,7 L12,3 L21,7 L12,11 Z M3,7 V17 L12,21 L21,17 V7 M12,11 V21</StreamGeometry>
+        <StreamGeometry x:Key="IcoList">M8,6 H20 M8,12 H20 M8,18 H20 M4,6 H4.01 M4,12 H4.01 M4,18 H4.01</StreamGeometry>
+        <StreamGeometry x:Key="IcoShield">M12,3 L20,6 V12 C20,16.5 16.6,20 12,21 C7.4,20 4,16.5 4,12 V6 Z</StreamGeometry>
+        <StreamGeometry x:Key="IcoLock">M5,11 H19 V21 H5 Z M8,11 V8 A4,4 0 0 1 16,8 V11</StreamGeometry>
+        <StreamGeometry x:Key="IcoRefresh">M20,11 A8,8 0 1 0 17.7,16.7 M20,4 V11 H13</StreamGeometry>
+        <StreamGeometry x:Key="IcoTrash">M4,7 H20 M9,7 V4 H15 V7 M6,7 L7,20 H17 L18,7</StreamGeometry>
+        <StreamGeometry x:Key="IcoWarn">M12,3 L2,20 H22 Z M12,10 V14 M12,17 V17.01</StreamGeometry>
+        <StreamGeometry x:Key="IcoFolder">M3,6 H9 L11,8 H21 V19 H3 Z</StreamGeometry>
+
+        <!-- One file in a Review list -->
+        <DataTemplate x:Key="FileRowTemplate" DataType="{x:Type local:FileRow}">
+            <Border Padding="8,10" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,0,0,1" Opacity="{Binding RowOpacity}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="40"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" IsEnabled="{Binding IsUnlocked}"
+                              AutomationProperties.Name="{Binding Name}" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding Folder}" Style="{StaticResource Mono}" Margin="0,2,0,0"/>
+                        <StackPanel Orientation="Horizontal" Visibility="{Binding LockVisibility}" Margin="0,4,0,0">
+                            <local:Icon Data="{StaticResource IcoLock}" Width="13" Height="13" Foreground="{DynamicResource Muted}"/>
+                            <TextBlock Text="{Binding LockedReason}" Style="{StaticResource MutedText}" FontSize="12" Margin="6,0,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Text="{Binding SizeText}" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="3" Text="{Binding ModifiedText}" Style="{StaticResource MutedText}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                    <Button Grid.Column="4" Content="Show" Style="{StaticResource Link}" Tag="{Binding Path}" Click="ShowInExplorer_Click"
+                            Margin="18,0,0,0" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="232"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ============ Sidebar ============ -->
+        <Border Background="{DynamicResource Sidebar}" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,0,1,0">
+            <DockPanel Margin="18,26,18,20">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8,0,0,28">
+                    <Image Source="Assets/byterake.ico" Width="30" Height="30"/>
+                    <TextBlock Text="Byterake" FontFamily="{StaticResource HeadFont}" FontWeight="Bold" FontSize="20" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Bottom">
+                    <Border Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="12" Padding="14">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <local:Icon Data="{StaticResource IcoShield}" Width="16" Height="16" Foreground="{DynamicResource Accent}"/>
+                                <TextBlock Text="Fully offline" FontWeight="SemiBold" FontSize="13" Margin="8,0,0,0"/>
+                            </StackPanel>
+                            <TextBlock Style="{StaticResource MutedText}" FontSize="12" Margin="0,6,0,0"
+                                       Text="No network, no telemetry. Every rule lives in catalog.json on this PC."/>
+                        </StackPanel>
+                    </Border>
+                    <TextBlock x:Name="RightsText" Style="{StaticResource MutedText}" FontSize="12" Margin="6,12,0,0"/>
+                </StackPanel>
+
+                <StackPanel>
+                    <RadioButton Style="{StaticResource Nav}" Tag="PageOverview" Checked="Nav_Checked" IsChecked="True" x:Name="NavOverview" AutomationProperties.Name="Overview">
+                        <StackPanel Orientation="Horizontal">
+                            <local:Icon Data="{StaticResource IcoGrid}"/>
+                            <TextBlock Text="Overview" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource Nav}" Tag="PageScan" Checked="Nav_Checked" x:Name="NavScan" AutomationProperties.Name="Scan folders">
+                        <StackPanel Orientation="Horizontal">
+                            <local:Icon Data="{StaticResource IcoSearch}"/>
+                            <TextBlock Text="Scan folders" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource Nav}" Tag="PageReview" Checked="Nav_Checked" x:Name="NavReview" AutomationProperties.Name="Review files">
+                        <StackPanel Orientation="Horizontal">
+                            <local:Icon Data="{StaticResource IcoFiles}"/>
+                            <TextBlock Text="Review files" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource Nav}" Tag="PageApps" Checked="Nav_Checked" x:Name="NavApps" AutomationProperties.Name="Uninstall apps">
+                        <StackPanel Orientation="Horizontal">
+                            <local:Icon Data="{StaticResource IcoBox}"/>
+                            <TextBlock Text="Uninstall apps" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource Nav}" Tag="PageLog" Checked="Nav_Checked" x:Name="NavLog" AutomationProperties.Name="Activity log">
+                        <StackPanel Orientation="Horizontal">
+                            <local:Icon Data="{StaticResource IcoList}"/>
+                            <TextBlock Text="Activity log" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </RadioButton>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ============ Overview ============ -->
+        <ScrollViewer x:Name="PageOverview" Grid.Column="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="32,28,32,40">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Overview" Style="{StaticResource H1}"/>
+                        <TextBlock x:Name="ScanInfoText" Style="{StaticResource MutedText}" Margin="0,4,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Drive" Style="{StaticResource MutedText}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <ItemsControl x:Name="DriveList">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                        <Button Style="{StaticResource Ghost}" Click="Refresh_Click" Margin="4,0,0,0" AutomationProperties.Name="Refresh">
+                            <StackPanel Orientation="Horizontal">
+                                <local:Icon Data="{StaticResource IcoRefresh}" Width="16" Height="16"/>
+                                <TextBlock Text="Refresh" Margin="8,0,0,0"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource Primary}" Click="ScanDrive_Click" Margin="10,0,0,0" AutomationProperties.Name="Scan drive">
+                            <StackPanel Orientation="Horizontal">
+                                <local:Icon Data="{StaticResource IcoSearch}" Width="16" Height="16"/>
+                                <TextBlock Text="Scan drive" Margin="8,0,0,0"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <Border x:Name="CatalogWarnBox" Background="{DynamicResource AmberSoft}" CornerRadius="12" Padding="14,10" Margin="0,18,0,0" Visibility="Collapsed">
+                    <TextBlock x:Name="CatalogWarnText" Foreground="{DynamicResource AmberText}" TextWrapping="Wrap" FontSize="13"/>
+                </Border>
+
+                <UniformGrid Columns="4" Margin="-8,20,-8,0">
+                    <Border Style="{StaticResource Card}" Margin="8" Padding="20">
+                        <StackPanel>
+                            <TextBlock Text="Total size" Style="{StaticResource MutedText}"/>
+                            <TextBlock x:Name="TotalText" Style="{StaticResource Big}" Margin="0,8,0,6"/>
+                            <TextBlock x:Name="DriveLabelText" Style="{StaticResource MutedText}" FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}" Margin="8" Padding="20">
+                        <StackPanel>
+                            <TextBlock Text="Used" Style="{StaticResource MutedText}"/>
+                            <TextBlock x:Name="UsedText" Style="{StaticResource Big}" Margin="0,8,0,10"/>
+                            <ProgressBar x:Name="UsedBar" Maximum="100" Foreground="{DynamicResource Blue}"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}" Margin="8" Padding="20">
+                        <StackPanel>
+                            <TextBlock Text="Free now" Style="{StaticResource MutedText}"/>
+                            <TextBlock x:Name="FreeText" Style="{StaticResource Big}" Foreground="{DynamicResource Accent}" Margin="0,8,0,6"/>
+                            <TextBlock x:Name="FreePctText" Style="{StaticResource MutedText}" FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}" Margin="8" Padding="20">
+                        <StackPanel>
+                            <TextBlock Text="After selected cleanup" Style="{StaticResource MutedText}"/>
+                            <TextBlock x:Name="AfterText" Style="{StaticResource Big}" Margin="0,8,0,6"/>
+                            <TextBlock x:Name="AfterNote" Style="{StaticResource MutedText}" FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+                </UniformGrid>
+
+                <Border x:Name="AdminBanner" Background="{DynamicResource AmberSoft}" CornerRadius="12" Padding="16,12" Margin="0,14,0,0" Visibility="Collapsed">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <local:Icon Data="{StaticResource IcoShield}" Foreground="{DynamicResource Amber}" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="AdminBannerText" Grid.Column="1" Foreground="{DynamicResource AmberText}" TextWrapping="Wrap" Margin="12,0" VerticalAlignment="Center" FontSize="13"/>
+                        <Button Grid.Column="2" Content="Restart as administrator…" Style="{StaticResource Ghost}" Click="RestartAdmin_Click"/>
+                    </Grid>
+                </Border>
+
+                <Grid Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="24"/>
+                        <ColumnDefinition Width="340"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel>
+                        <!-- Catalog -->
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Cleanup catalog" Style="{StaticResource H2}"/>
+                                        <TextBlock Style="{StaticResource MutedText}" Margin="0,4,0,0"
+                                                   Text="Safe items are ticked for you. Review items stay off until you choose them."/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                                        <Button Content="Select all Safe" Style="{StaticResource Ghost}" Click="SelectSafe_Click" FontSize="13"/>
+                                        <Button Content="Clear" Style="{StaticResource Ghost}" Click="ClearAll_Click" FontSize="13" Margin="8,0,0,0"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Margin="8,18,8,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="40"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="96"/>
+                                        <ColumnDefinition Width="64"/>
+                                        <ColumnDefinition Width="150"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="1" Text="TARGET" Style="{StaticResource MutedText}" FontSize="11"/>
+                                    <TextBlock Grid.Column="2" Text="RISK" Style="{StaticResource MutedText}" FontSize="11"/>
+                                    <TextBlock Grid.Column="3" Text="ADMIN" Style="{StaticResource MutedText}" FontSize="11"/>
+                                    <TextBlock Grid.Column="4" Text="SIZE" Style="{StaticResource MutedText}" FontSize="11" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0"/>
+
+                                <ItemsControl x:Name="TargetList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type local:TargetRow}">
+                                            <Border Padding="8,12" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,0,0,1" Opacity="{Binding RowOpacity}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="40"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="96"/>
+                                                        <ColumnDefinition Width="64"/>
+                                                        <ColumnDefinition Width="150"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" IsEnabled="{Binding IsCheckable}"
+                                                              AutomationProperties.Name="{Binding Name}" VerticalAlignment="Top" Margin="0,1,0,0"/>
+                                                    <StackPanel Grid.Column="1" Margin="0,0,14,0">
+                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                        <TextBlock Text="{Binding Description}" Style="{StaticResource MutedText}" Margin="0,3,0,0"/>
+                                                        <TextBlock Text="{Binding PathsText}" Style="{StaticResource Mono}" Margin="0,4,0,0"/>
+                                                        <TextBlock Text="{Binding Note}" Foreground="{DynamicResource AmberText}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"
+                                                                   Visibility="{Binding HasNote, Converter={StaticResource BoolVis}}"/>
+                                                    </StackPanel>
+                                                    <Grid Grid.Column="2" VerticalAlignment="Top">
+                                                        <Border Style="{StaticResource PillSafe}" Visibility="{Binding IsSafe, Converter={StaticResource BoolVis}}">
+                                                            <TextBlock Text="Safe" Foreground="{DynamicResource AccentText}" FontSize="12" FontWeight="SemiBold"/>
+                                                        </Border>
+                                                        <Border Style="{StaticResource PillReview}" Visibility="{Binding IsReview, Converter={StaticResource BoolVis}}">
+                                                            <TextBlock Text="Review" Foreground="{DynamicResource AmberText}" FontSize="12" FontWeight="SemiBold"/>
+                                                        </Border>
+                                                    </Grid>
+                                                    <TextBlock Grid.Column="3" Text="{Binding AdminText}" Style="{StaticResource MutedText}" VerticalAlignment="Top" Margin="0,2,0,0"/>
+                                                    <StackPanel Grid.Column="4" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                                        <TextBlock Text="{Binding SizeText}" FontFamily="{StaticResource HeadFont}" FontWeight="SemiBold" FontSize="15" HorizontalAlignment="Right"/>
+                                                        <Button Content="{Binding ChooseText}" Style="{StaticResource Link}" Tag="{Binding}" Click="ChooseFiles_Click"
+                                                                HorizontalAlignment="Right" Margin="0,4,0,0" FontSize="12"
+                                                                Visibility="{Binding IsFileList, Converter={StaticResource BoolVis}}"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <Border x:Name="WinOldWarn" Background="{DynamicResource DangerSoft}" BorderBrush="{DynamicResource DangerLine}" BorderThickness="1"
+                                        CornerRadius="12" Padding="14,12" Margin="0,14,0,0" Visibility="Collapsed">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <local:Icon Data="{StaticResource IcoWarn}" Foreground="{DynamicResource DangerText}" VerticalAlignment="Top"/>
+                                        <TextBlock x:Name="WinOldWarnText" Grid.Column="1" Foreground="{DynamicResource DangerText}" TextWrapping="Wrap" Margin="12,0,0,0" FontSize="13"/>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Largest folders -->
+                        <Border Style="{StaticResource Card}" Margin="0,24,0,0">
+                            <StackPanel>
+                                <Grid>
+                                    <TextBlock x:Name="TopFoldersTitle" Text="Largest folders" Style="{StaticResource H2}"/>
+                                    <Button Content="Open full tree" Style="{StaticResource Link}" HorizontalAlignment="Right" VerticalAlignment="Center" Click="OpenTree_Click"/>
+                                </Grid>
+                                <TextBlock x:Name="TopFoldersEmpty" Style="{StaticResource MutedText}" Margin="0,12,0,0"
+                                           Text="Scan the drive to see where your space went. A full scan of C: usually takes one to three minutes."/>
+                                <ItemsControl x:Name="TopFolderList" Margin="0,12,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type local:TopFolder}">
+                                            <StackPanel Margin="0,0,0,14">
+                                                <Grid>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <local:Icon Data="{StaticResource IcoLock}" Width="14" Height="14" Foreground="{DynamicResource Muted}"
+                                                                    Visibility="{Binding LockVisibility}" Margin="0,0,8,0" AutomationProperties.Name="Protected"/>
+                                                        <TextBlock Text="{Binding Path}" Style="{StaticResource Mono}" FontSize="13" Foreground="{DynamicResource Text}"/>
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding SizeText}" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                                                </Grid>
+                                                <Grid Height="8" Margin="0,6,0,0">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="{Binding BarStar}"/>
+                                                        <ColumnDefinition Width="{Binding RestStar}"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Grid.ColumnSpan="2" Background="{DynamicResource Track}" CornerRadius="4"/>
+                                                    <Border Background="{DynamicResource Blue}" CornerRadius="4"/>
+                                                </Grid>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                    <local:Icon Data="{StaticResource IcoLock}" Width="13" Height="13" Foreground="{DynamicResource Muted}"/>
+                                    <TextBlock Style="{StaticResource MutedText}" FontSize="12" Margin="6,0,0,0"
+                                               Text="Locked folders are on the never-touch list. Byterake shows them, but never deletes from them."/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Right column -->
+                    <StackPanel Grid.Column="2">
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <Grid>
+                                    <TextBlock x:Name="GoalTitle" Text="Goal: 100 GB free" Style="{StaticResource H2}" FontSize="17" VerticalAlignment="Center"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <TextBox x:Name="GoalBox" Width="56" Text="100" HorizontalContentAlignment="Right" LostFocus="Goal_Changed" KeyDown="Goal_KeyDown"
+                                                 AutomationProperties.Name="Goal in GB"/>
+                                        <TextBlock Text="GB" Style="{StaticResource MutedText}" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                    </StackPanel>
+                                </Grid>
+                                <Grid Width="180" Height="180" Margin="0,18,0,8" HorizontalAlignment="Center">
+                                    <Ellipse Stroke="{DynamicResource Track}" StrokeThickness="16"/>
+                                    <Path x:Name="RingProjected" Stroke="{DynamicResource Ring2}" StrokeThickness="16" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                    <Path x:Name="RingNow" Stroke="{DynamicResource Accent}" StrokeThickness="16" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                        <TextBlock x:Name="GoalPctText" FontFamily="{StaticResource HeadFont}" FontWeight="Bold" FontSize="32" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="after cleanup" Style="{StaticResource MutedText}" FontSize="12" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
+                                <Grid Margin="0,6,0,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="10" Height="10" Fill="{DynamicResource Accent}"/>
+                                        <TextBlock Text="Free now" Margin="8,0,0,0" FontSize="13"/>
+                                    </StackPanel>
+                                    <TextBlock x:Name="LegendFree" FontWeight="SemiBold" HorizontalAlignment="Right" FontSize="13"/>
+                                </Grid>
+                                <Grid Margin="0,8,0,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="10" Height="10" Fill="{DynamicResource Ring2}"/>
+                                        <TextBlock Text="Selected to clean" Margin="8,0,0,0" FontSize="13"/>
+                                    </StackPanel>
+                                    <TextBlock x:Name="LegendSelected" FontWeight="SemiBold" HorizontalAlignment="Right" FontSize="13"/>
+                                </Grid>
+                                <Grid Margin="0,8,0,0">
+                                    <TextBlock Text="Still needed" Style="{StaticResource MutedText}"/>
+                                    <TextBlock x:Name="LegendNeeded" FontWeight="SemiBold" HorizontalAlignment="Right" FontSize="13" Foreground="{DynamicResource Muted}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Card}" Margin="0,24,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Ready to clean" Style="{StaticResource H2}" FontSize="17"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                    <TextBlock x:Name="SelTotalText" FontFamily="{StaticResource HeadFont}" FontWeight="Bold" FontSize="34" Foreground="{DynamicResource Accent}"/>
+                                    <TextBlock x:Name="SelCountText" Style="{StaticResource MutedText}" VerticalAlignment="Bottom" Margin="10,0,0,7"/>
+                                </StackPanel>
+                                <Border x:Name="AdminNoteBox" Background="{DynamicResource Surface2}" CornerRadius="10" Padding="12,10" Margin="0,12,0,0" Visibility="Collapsed">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <local:Icon Data="{StaticResource IcoShield}" Width="16" Height="16" Foreground="{DynamicResource Amber}" VerticalAlignment="Top"/>
+                                        <TextBlock x:Name="AdminNoteText" Grid.Column="1" TextWrapping="Wrap" FontSize="12.5" Margin="10,0,0,0" Foreground="{DynamicResource Muted}"/>
+                                    </Grid>
+                                </Border>
+                                <StackPanel x:Name="CleanProgressPanel" Margin="0,14,0,0" Visibility="Collapsed">
+                                    <ProgressBar x:Name="CleanBar" Maximum="100"/>
+                                    <TextBlock x:Name="CleanProgressText" Style="{StaticResource MutedText}" FontSize="12" Margin="0,6,0,0" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                                </StackPanel>
+                                <Button x:Name="CleanButton" Style="{StaticResource Primary}" MinHeight="48" Margin="0,16,0,0" Click="Clean_Click" AutomationProperties.Name="Clean selected">
+                                    <StackPanel Orientation="Horizontal">
+                                        <local:Icon Data="{StaticResource IcoTrash}"/>
+                                        <TextBlock Text="Clean selected…" Margin="8,0,0,0"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="CancelCleanButton" Content="Stop cleaning" Style="{StaticResource Ghost}" Margin="0,10,0,0" Click="CancelClean_Click" Visibility="Collapsed"/>
+                                <TextBlock Style="{StaticResource MutedText}" FontSize="12" Margin="0,12,0,0" TextAlignment="Center"
+                                           Text="Nothing is removed until you confirm the exact count and size on the next screen."/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Card}" Margin="0,24,0,0" Background="{DynamicResource Sidebar}" Padding="20">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <local:Icon Data="{StaticResource IcoLock}" Width="16" Height="16" Foreground="{DynamicResource Muted}"/>
+                                    <TextBlock Text="Never touched" FontWeight="SemiBold" FontSize="15" Margin="8,0,0,0"/>
+                                </StackPanel>
+                                <TextBlock Style="{StaticResource MutedText}" FontSize="12.5" Margin="0,6,0,10" Text="Built in. Refused even if selected."/>
+                                <WrapPanel>
+                                    <Border Style="{StaticResource Chiplet}"><TextBlock Text="System32" Style="{StaticResource Mono}" Foreground="{DynamicResource Text}"/></Border>
+                                    <Border Style="{StaticResource Chiplet}"><TextBlock Text="WinSxS" Style="{StaticResource Mono}" Foreground="{DynamicResource Text}"/></Border>
+                                    <Border Style="{StaticResource Chiplet}"><TextBlock Text="Program Files" Style="{StaticResource Mono}" Foreground="{DynamicResource Text}"/></Border>
+                                    <Border Style="{StaticResource Chiplet}"><TextBlock Text="Program Files (x86)" Style="{StaticResource Mono}" Foreground="{DynamicResource Text}"/></Border>
+                                    <Border Style="{StaticResource Chiplet}"><TextBlock Text="pagefile.sys" Style="{StaticResource Mono}" Foreground="{DynamicResource Text}"/></Border>
+                                    <Border Style="{StaticResource Chiplet}"><TextBlock Text="hiberfil.sys" Style="{StaticResource Mono}" Foreground="{DynamicResource Text}"/></Border>
+                                    <Border Style="{StaticResource Chiplet}"><TextBlock Text="swapfile.sys" Style="{StaticResource Mono}" Foreground="{DynamicResource Text}"/></Border>
+                                    <Border Style="{StaticResource Chiplet}"><TextBlock Text="Documents" Style="{StaticResource Mono}" Foreground="{DynamicResource Text}"/></Border>
+                                    <Border Style="{StaticResource Chiplet}"><TextBlock Text="Desktop" Style="{StaticResource Mono}" Foreground="{DynamicResource Text}"/></Border>
+                                    <Border Style="{StaticResource Chiplet}"><TextBlock Text="Pictures" Style="{StaticResource Mono}" Foreground="{DynamicResource Text}"/></Border>
+                                    <Border Style="{StaticResource Chiplet}"><TextBlock Text="Videos" Style="{StaticResource Mono}" Foreground="{DynamicResource Text}"/></Border>
+                                    <Border Style="{StaticResource Chiplet}"><TextBlock Text="Music" Style="{StaticResource Mono}" Foreground="{DynamicResource Text}"/></Border>
+                                    <Border Style="{StaticResource Chiplet}"><TextBlock Text=".git folders" Style="{StaticResource Mono}" Foreground="{DynamicResource Text}"/></Border>
+                                    <Border Style="{StaticResource Chiplet}"><TextBlock Text="system files" Style="{StaticResource Mono}" Foreground="{DynamicResource Text}"/></Border>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ============ Scan folders ============ -->
+        <Grid x:Name="PageScan" Grid.Column="1" Margin="32,28,32,28" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid>
+                <StackPanel>
+                    <TextBlock Text="Scan folders" Style="{StaticResource H1}"/>
+                    <TextBlock Style="{StaticResource MutedText}" Margin="0,4,0,0"
+                               Text="See which folders and files use the most space. Links and junctions are skipped; folders you can't open are listed in the log."/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button x:Name="ScanDriveBtn2" Style="{StaticResource Primary}" Click="ScanDrive_Click" Content="Scan drive"/>
+                    <Button Style="{StaticResource Ghost}" Click="ScanFolder_Click" Content="Choose a folder…" Margin="8,0,0,0"/>
+                    <Button x:Name="CancelScanBtn" Style="{StaticResource Danger}" Click="CancelScan_Click" Content="Cancel scan" Margin="8,0,0,0" Visibility="Collapsed"/>
+                </StackPanel>
+            </Grid>
+            <StackPanel Grid.Row="1" Margin="0,16,0,16">
+                <ProgressBar x:Name="ScanBar" IsIndeterminate="True" Visibility="Collapsed"/>
+                <TextBlock x:Name="ScanStatus" Style="{StaticResource MutedText}" Margin="0,6,0,0" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+            </StackPanel>
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="24"/>
+                    <ColumnDefinition Width="430"/>
+                </Grid.ColumnDefinitions>
+                <Border Style="{StaticResource Card}" Padding="12">
+                    <TreeView x:Name="FolderTree" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource Text}">
+                        <TreeView.Resources>
+                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent"/>
+                            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="Transparent"/>
+                        </TreeView.Resources>
+                        <TreeView.ItemContainerStyle>
+                            <Style TargetType="TreeViewItem">
+                                <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+                                <Setter Property="Padding" Value="2,4"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TreeView.ItemContainerStyle>
+                        <TreeView.ItemTemplate>
+                            <HierarchicalDataTemplate DataType="{x:Type local:FolderRow}" ItemsSource="{Binding Children}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="340"/>
+                                        <ColumnDefinition Width="90"/>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="48"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Orientation="Horizontal">
+                                        <local:Icon Data="{StaticResource IcoLock}" Width="13" Height="13" Foreground="{DynamicResource Muted}"
+                                                    Visibility="{Binding LockVisibility}" Margin="0,0,6,0"/>
+                                        <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}"/>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" Text="{Binding SizeText}" FontWeight="SemiBold" HorizontalAlignment="Right" Margin="0,0,12,0"/>
+                                    <Grid Grid.Column="2" Height="6" VerticalAlignment="Center">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="{Binding BarStar}"/>
+                                            <ColumnDefinition Width="{Binding RestStar}"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.ColumnSpan="2" Background="{DynamicResource Track}" CornerRadius="3"/>
+                                        <Border Background="{DynamicResource Blue}" CornerRadius="3"/>
+                                    </Grid>
+                                    <TextBlock Grid.Column="3" Text="{Binding PercentText}" Style="{StaticResource MutedText}" FontSize="12" HorizontalAlignment="Right"/>
+                                </Grid>
+                            </HierarchicalDataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
+                </Border>
+                <Border Grid.Column="2" Style="{StaticResource Card}">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="Largest files" Style="{StaticResource H2}" FontSize="17" Margin="0,0,0,10"/>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl x:Name="LargestFilesList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type local:FileRow}">
+                                        <Grid Margin="0,0,0,10" Opacity="{Binding RowOpacity}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <local:Icon Data="{StaticResource IcoLock}" Width="12" Height="12" Foreground="{DynamicResource Muted}" Visibility="{Binding LockVisibility}" Margin="0,0,6,0"/>
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding Folder}" Style="{StaticResource Mono}" FontSize="11" ToolTip="{Binding Path}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                                <TextBlock Text="{Binding SizeText}" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                                                <Button Content="Show" Style="{StaticResource Link}" Tag="{Binding Path}" Click="ShowInExplorer_Click" HorizontalAlignment="Right" FontSize="12"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- ============ Review files ============ -->
+        <ScrollViewer x:Name="PageReview" Grid.Column="1" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+            <StackPanel Margin="32,28,32,40">
+                <TextBlock Text="Review files" Style="{StaticResource H1}"/>
+                <TextBlock Style="{StaticResource MutedText}" Margin="0,4,0,0"
+                           Text="Nothing here is ticked for you. Tick only the files you are sure you no longer need. Locked files are on the never-touch list."/>
+
+                <Border Style="{StaticResource Card}" Margin="0,22,0,0">
+                    <StackPanel>
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="Old installers in Downloads" Style="{StaticResource H2}"/>
+                                <TextBlock x:Name="InstallersSub" Style="{StaticResource MutedText}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <Button Content="Open Downloads" Style="{StaticResource Ghost}" HorizontalAlignment="Right" VerticalAlignment="Top" Click="OpenDownloads_Click"/>
+                        </Grid>
+                        <TextBlock x:Name="InstallersEmpty" Style="{StaticResource MutedText}" Margin="0,14,0,0" Visibility="Collapsed"/>
+                        <ItemsControl x:Name="InstallerList" Margin="0,10,0,0" ItemTemplate="{StaticResource FileRowTemplate}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,24,0,0">
+                    <StackPanel>
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="Large files" Style="{StaticResource H2}"/>
+                                <TextBlock Style="{StaticResource MutedText}" Margin="0,4,0,0" Text="From the last drive scan. Largest first."/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                <TextBlock Text="Over" Style="{StaticResource MutedText}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBox x:Name="ThresholdBox" Width="70" Text="500" HorizontalContentAlignment="Right" KeyDown="Threshold_KeyDown"
+                                         AutomationProperties.Name="Minimum size in MB"/>
+                                <TextBlock Text="MB" Style="{StaticResource MutedText}" VerticalAlignment="Center" Margin="6,0,10,0"/>
+                                <Button Content="Apply" Style="{StaticResource Ghost}" Click="ApplyThreshold_Click"/>
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock x:Name="LargeEmpty" Style="{StaticResource MutedText}" Margin="0,14,0,0"
+                                   Text="Scan the drive first (Overview > Scan drive). Large files then show up here."/>
+                        <ItemsControl x:Name="LargeList" Margin="0,10,0,0" ItemTemplate="{StaticResource FileRowTemplate}"/>
+                    </StackPanel>
+                </Border>
+
+                <Grid Margin="0,22,0,0">
+                    <TextBlock x:Name="ReviewTotal" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <Button Content="Back to Overview" Style="{StaticResource Primary}" HorizontalAlignment="Right" Click="BackToOverview_Click"/>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ============ Uninstall apps ============ -->
+        <Grid x:Name="PageApps" Grid.Column="1" Margin="32,28,32,28" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <StackPanel>
+                <TextBlock Text="Uninstall apps" Style="{StaticResource H1}"/>
+                <TextBlock Style="{StaticResource MutedText}" Margin="0,4,0,0"
+                           Text="Opens each program's own uninstaller after you confirm. Byterake never deletes program folders itself."/>
+            </StackPanel>
+            <Grid Grid.Row="1" Margin="0,18,0,14">
+                <StackPanel Orientation="Horizontal">
+                    <Grid Width="280">
+                        <TextBox x:Name="SearchBox" TextChanged="Search_Changed" AutomationProperties.Name="Search programs"/>
+                        <TextBlock x:Name="SearchHint" Text="Search programs" IsHitTestVisible="False" Foreground="{DynamicResource Muted}"
+                                   VerticalAlignment="Center" Margin="11,0,0,0"/>
+                    </Grid>
+                    <TextBlock Text="Sort" Style="{StaticResource MutedText}" VerticalAlignment="Center" Margin="18,0,10,0"/>
+                    <RadioButton Style="{StaticResource Chip}" GroupName="sort" Content="Size" Tag="size" IsChecked="True" Checked="Sort_Checked"/>
+                    <RadioButton Style="{StaticResource Chip}" GroupName="sort" Content="Name" Tag="name" Checked="Sort_Checked"/>
+                    <RadioButton Style="{StaticResource Chip}" GroupName="sort" Content="Install date" Tag="date" Checked="Sort_Checked"/>
+                </StackPanel>
+                <TextBlock x:Name="AppsCount" Style="{StaticResource MutedText}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+            </Grid>
+            <Border Grid.Row="2" Style="{StaticResource Card}" Padding="12">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl x:Name="AppsList">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type local:ProgramRow}">
+                                <Border Padding="10,10" BorderBrush="{DynamicResource LineSoft}" BorderThickness="0,0,0,1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="110"/>
+                                            <ColumnDefinition Width="120"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="0,0,12,0">
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="{Binding Details}" Style="{StaticResource MutedText}" FontSize="12" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Text="{Binding SizeText}" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding DateText}" Style="{StaticResource MutedText}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="3" Content="Uninstall…" Style="{StaticResource Ghost}" Tag="{Binding}" Click="Uninstall_Click" Margin="18,0,0,0" FontSize="13"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- ============ Activity log ============ -->
+        <Grid x:Name="PageLog" Grid.Column="1" Margin="32,28,32,28" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid Margin="0,0,0,18">
+                <StackPanel>
+                    <TextBlock Text="Activity log" Style="{StaticResource H1}"/>
+                    <TextBlock x:Name="LogPathText" Style="{StaticResource MutedText}" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Button Content="Open log folder" Style="{StaticResource Ghost}" HorizontalAlignment="Right" VerticalAlignment="Center" Click="OpenLogFolder_Click"/>
+            </Grid>
+            <Border Grid.Row="1" Style="{StaticResource Card}" Padding="14">
+                <TextBox x:Name="LogBox" IsReadOnly="True" Background="Transparent" BorderThickness="0" FontFamily="{StaticResource MonoFont}" FontSize="12"
+                         VerticalContentAlignment="Top"
+                         VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" TextWrapping="NoWrap" Padding="0"/>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

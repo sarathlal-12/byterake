@@ -1,0 +1,8 @@
+bin/
+obj/
+dist/
+Output/
+*.user
+.vs/
+TestResults/
+.admin-test/

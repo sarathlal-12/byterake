@@ -1,0 +1,192 @@
+{
+  // Byterake cleanup catalog.
+  // Edit this file to add or change targets; the GUI reads it at start-up.
+  // Put a copy next to Byterake.exe to override the built-in one.
+  //
+  // Fields
+  //   id          unique short name
+  //   name        shown in the list
+  //   description plain-English explanation
+  //   risk        "Safe"   = cache or temp data that rebuilds itself (ticked by default)
+  //               "Review" = check before cleaning (never ticked by default)
+  //               "Never"  = listed for reference only, never offered
+  //   admin       true if Windows needs administrator rights to clean it
+  //   kind        "contents"   = delete matching files inside the paths (the folders themselves stay)
+  //               "recyclebin" = empty the Recycle Bin of the chosen drive
+  //               "downloads"  = list matching files in the Downloads folder, user ticks each one
+  //               "largefiles" = list files over the size set in the app, user ticks each one
+  //               "windowstool"= measured here, but cleaned by opening Windows' own Disk Cleanup
+  //   paths       folders or files; environment variables like %TEMP% are expanded,
+  //               and a * in a folder name matches any folder (for browser profiles)
+  //   patterns    file name patterns to match (default "*")
+  //   recursive   look in sub-folders too (default true)
+  //   extensions  for "downloads": file types to list
+  //   minSizeMB   for "downloads": smallest file to list
+  //   estimate    typical size, shown before measuring
+  //   warning     shown in red when the target is ticked
+  //
+  // The never-touch list is NOT in this file. It is built into the program and cannot be changed.
+  "version": 1,
+  "targets": [
+    {
+      "id": "user-temp",
+      "name": "User temp files",
+      "description": "Leftovers apps write while they run. Apps recreate what they still need.",
+      "risk": "Safe", "admin": false, "kind": "contents",
+      "paths": [ "%TEMP%" ],
+      "estimate": "0.5-10 GB"
+    },
+    {
+      "id": "windows-temp",
+      "name": "Windows temp files",
+      "description": "System-wide temporary files left by installers and Windows services.",
+      "risk": "Safe", "admin": true, "kind": "contents",
+      "paths": [ "%WINDIR%\\Temp" ],
+      "estimate": "0.1-5 GB"
+    },
+    {
+      "id": "recycle-bin",
+      "name": "Recycle Bin",
+      "description": "Files you already deleted. Emptying it is permanent.",
+      "risk": "Safe", "admin": false, "kind": "recyclebin",
+      "paths": [],
+      "estimate": "Varies"
+    },
+    {
+      "id": "browser-chrome",
+      "name": "Chrome cache",
+      "description": "Saved copies of web pages and images. Only cache folders: never profiles, passwords, bookmarks or history.",
+      "risk": "Safe", "admin": false, "kind": "contents",
+      "paths": [
+        "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\*\\Cache",
+        "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\*\\Code Cache",
+        "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\*\\GPUCache",
+        "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\ShaderCache",
+        "%LOCALAPPDATA%\\Google\\Chrome\\User Data\\GrShaderCache"
+      ],
+      "estimate": "0.2-3 GB"
+    },
+    {
+      "id": "browser-edge",
+      "name": "Edge cache",
+      "description": "Saved copies of web pages and images. Only cache folders: never profiles, passwords, bookmarks or history.",
+      "risk": "Safe", "admin": false, "kind": "contents",
+      "paths": [
+        "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\*\\Cache",
+        "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\*\\Code Cache",
+        "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\*\\GPUCache",
+        "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\ShaderCache",
+        "%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\GrShaderCache"
+      ],
+      "estimate": "0.2-3 GB"
+    },
+    {
+      "id": "browser-firefox",
+      "name": "Firefox cache",
+      "description": "Saved copies of web pages. Firefox keeps its cache apart from your profile, so nothing personal is touched.",
+      "risk": "Safe", "admin": false, "kind": "contents",
+      "paths": [
+        "%LOCALAPPDATA%\\Mozilla\\Firefox\\Profiles\\*\\cache2",
+        "%LOCALAPPDATA%\\Mozilla\\Firefox\\Profiles\\*\\startupCache",
+        "%LOCALAPPDATA%\\Mozilla\\Firefox\\Profiles\\*\\thumbnails"
+      ],
+      "estimate": "0.1-2 GB"
+    },
+    {
+      "id": "thumbnails",
+      "name": "Thumbnail cache",
+      "description": "Picture previews File Explorer shows. Rebuilt when you browse. Files Explorer is using are skipped.",
+      "risk": "Safe", "admin": false, "kind": "contents",
+      "paths": [ "%LOCALAPPDATA%\\Microsoft\\Windows\\Explorer" ],
+      "patterns": [ "thumbcache_*.db", "iconcache_*.db" ],
+      "recursive": false,
+      "estimate": "0.05-1 GB"
+    },
+    {
+      "id": "crash-user",
+      "name": "App crash dumps and error reports",
+      "description": "Memory dumps and Windows Error Reporting files from apps that crashed.",
+      "risk": "Safe", "admin": false, "kind": "contents",
+      "paths": [
+        "%LOCALAPPDATA%\\CrashDumps",
+        "%LOCALAPPDATA%\\Microsoft\\Windows\\WER\\ReportArchive",
+        "%LOCALAPPDATA%\\Microsoft\\Windows\\WER\\ReportQueue"
+      ],
+      "estimate": "0-2 GB"
+    },
+    {
+      "id": "crash-system",
+      "name": "System crash dumps and error reports",
+      "description": "Blue-screen memory dumps and system error reports. Only needed if you are debugging a crash.",
+      "risk": "Safe", "admin": true, "kind": "contents",
+      "paths": [
+        "%WINDIR%\\Minidump",
+        "%WINDIR%\\MEMORY.DMP",
+        "%WINDIR%\\LiveKernelReports",
+        "%PROGRAMDATA%\\Microsoft\\Windows\\WER\\ReportArchive",
+        "%PROGRAMDATA%\\Microsoft\\Windows\\WER\\ReportQueue"
+      ],
+      "estimate": "0-5 GB"
+    },
+    {
+      "id": "windows-update",
+      "name": "Windows Update downloads",
+      "description": "Update packages that are already installed. Windows downloads again anything it still needs.",
+      "risk": "Safe", "admin": true, "kind": "contents",
+      "paths": [ "%WINDIR%\\SoftwareDistribution\\Download" ],
+      "estimate": "0.5-8 GB"
+    },
+    {
+      "id": "delivery-optimization",
+      "name": "Delivery Optimization cache",
+      "description": "Pieces of updates Windows keeps to share with other PCs.",
+      "risk": "Safe", "admin": true, "kind": "contents",
+      "paths": [
+        "%WINDIR%\\SoftwareDistribution\\DeliveryOptimization",
+        "%WINDIR%\\ServiceProfiles\\NetworkService\\AppData\\Local\\Microsoft\\Windows\\DeliveryOptimization\\Cache"
+      ],
+      "estimate": "0.5-5 GB"
+    },
+    {
+      "id": "dev-caches",
+      "name": "npm, pip and NuGet caches",
+      "description": "Downloaded packages kept for reuse. Fetched again the next time a project needs them.",
+      "risk": "Safe", "admin": false, "kind": "contents",
+      "paths": [
+        "%LOCALAPPDATA%\\npm-cache",
+        "%APPDATA%\\npm-cache",
+        "%LOCALAPPDATA%\\pip\\Cache",
+        "%LOCALAPPDATA%\\NuGet\\v3-cache",
+        "%LOCALAPPDATA%\\NuGet\\plugins-cache"
+      ],
+      "estimate": "0-10 GB"
+    },
+    {
+      "id": "windows-old",
+      "name": "Windows.old (previous Windows)",
+      "description": "Your previous Windows installation, kept after a big update. Byterake opens Windows Disk Cleanup to remove it.",
+      "risk": "Review", "admin": true, "kind": "windowstool",
+      "paths": [ "%SystemDrive%\\Windows.old" ],
+      "warning": "Removing Windows.old means you can no longer go back to your previous version of Windows. Keep it if the last big update is less than 10 days old and something feels wrong.",
+      "estimate": "10-30 GB"
+    },
+    {
+      "id": "old-installers",
+      "name": "Old installers in Downloads",
+      "description": "Setup files and archives over 50 MB. You tick each file you want gone.",
+      "risk": "Review", "admin": false, "kind": "downloads",
+      "paths": [],
+      "extensions": [ ".exe", ".msi", ".zip" ],
+      "minSizeMB": 50,
+      "estimate": "Varies"
+    },
+    {
+      "id": "large-files",
+      "name": "Large files",
+      "description": "Files over the size you set, anywhere on the drive outside protected folders. Never ticked for you.",
+      "risk": "Review", "admin": false, "kind": "largefiles",
+      "paths": [],
+      "estimate": "Scan the drive first"
+    }
+  ]
+}

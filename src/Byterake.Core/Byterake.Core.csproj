@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Byterake never uses the network: drop the SDK's default HTTP import. -->
+    <Using Remove="System.Net.Http" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Built-in copy of the catalog, used when no catalog.json sits next to the .exe -->
+    <EmbeddedResource Include="..\..\catalog.json" LogicalName="Byterake.catalog.json" />
+  </ItemGroup>
+
+</Project>

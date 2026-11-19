@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Byterake.App/Byterake.App.csproj" />
+    <Project Path="src/Byterake.Core/Byterake.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Byterake.Tests/Byterake.Tests.csproj" />
+  </Folder>
+</Solution>
